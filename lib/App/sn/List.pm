@@ -38,7 +38,9 @@ sub run {
     } values %{ $App::sn::state->{notes} };
 
     foreach (@notes) {
-        print "$_->{key}\n";
+        next if $_->{deleted};
+        my ($head) = $_->{content} =~ /^\s*(.{1,30})/m;
+        print "$_->{key} $head\n";
     }
 }
 
