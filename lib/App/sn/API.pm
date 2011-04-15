@@ -14,6 +14,7 @@ sub new {
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
     my $ua = LWP::UserAgent->new;
+    $ua->show_progress(1) if $ENV{APP_SN_DEBUG};
 
     return bless { authority => 'https://simple-note.appspot.com', config => $config, ua => $ua }, $class;
 }

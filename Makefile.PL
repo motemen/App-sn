@@ -15,6 +15,7 @@ requires 'URI::Escape';
 requires 'JSON::XS';
 requires 'MIME::Base64';
 requires 'LWP::UserAgent';
+requires 'Script::State';
 
 auto_set_repository;
 auto_include;
