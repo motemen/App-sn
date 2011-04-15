@@ -6,15 +6,14 @@ use URI;
 use URI::Escape qw(uri_escape);
 use JSON::XS;
 use MIME::Base64 qw(encode_base64);
-use LWP::UserAgent;
+use AnyEvent::HTTP::LWP::UserAgent;
 
 sub new {
     my $class = shift;
 
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
-    my $ua = LWP::UserAgent->new;
-    $ua->show_progress(1) if $ENV{APP_SN_DEBUG};
+    my $ua = AnyEvent::HTTP::LWP::UserAgent->new;
 
     return bless { authority => 'https://simple-note.appspot.com', config => $config, ua => $ua }, $class;
 }

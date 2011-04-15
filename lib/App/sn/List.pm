@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use parent 'App::CLI::Command';
 use App::sn::API;
+use Coro;
 
 sub run {
     my ($self, $arg) = @_;
@@ -13,11 +14,18 @@ sub run {
             'index',
             $mark ? { mark => $mark } : { since => $App::sn::state->{lastmodified} || 0 }
         );
-        foreach (@{$res->{data}}) {
-            $App::sn::state->{notes}->{ $_->{key} } = $_;
-            $App::sn::state->{lastmodified} = $_->{modifydate}
-                if $_->{modifydate} > ( $App::sn::state->{lastmodified} || 0);
+
+        my @jobs;
+        foreach my $note (@{$res->{data}}) {
+            $App::sn::state->{lastmodified} = $note->{modifydate}
+                if $note->{modifydate} > ( $App::sn::state->{lastmodified} || 0);
+            push @jobs, async {
+                my $note = $api->get("data/$note->{key}");
+                $App::sn::state->{notes}->{ $note->{key} } = $note;
+            };
         }
+        $_->join for @jobs;
+
         redo if $mark = $res->{mark};
     }
 
