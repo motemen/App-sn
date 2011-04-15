@@ -14,6 +14,7 @@ requires 'URI';
 requires 'URI::Escape';
 requires 'JSON::XS';
 requires 'MIME::Base64';
+requires 'LWP::UserAgent';
 requires 'AnyEvent::HTTP::LWP::UserAgent';
 requires 'Coro';
 requires 'Script::State';

@@ -6,6 +6,7 @@ use URI;
 use URI::Escape qw(uri_escape);
 use JSON::XS;
 use MIME::Base64 qw(encode_base64);
+use LWP::UserAgent;
 use AnyEvent::HTTP::LWP::UserAgent;
 
 sub new {
@@ -13,7 +14,7 @@ sub new {
 
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
-    my $ua = AnyEvent::HTTP::LWP::UserAgent->new;
+    my $ua = LWP::UserAgent->new;
 
     return bless { authority => 'https://simple-note.appspot.com', config => $config, ua => $ua }, $class;
 }
@@ -46,6 +47,15 @@ sub get {
     );
     my $res = $self->{ua}->get($url);
     return decode_json $res->content;
+}
+
+sub get_async {
+    my $self = shift;
+    my $ua = $self->{ua};
+    $self->{ua} = AnyEvent::HTTP::LWP::UserAgent->new;
+    my $res = $self->get(@_);
+    $self->{ua} = $ua;
+    return $res;
 }
 
 sub post {
