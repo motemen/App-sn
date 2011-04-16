@@ -1,4 +1,4 @@
-package App::sn::Edit;
+package App::sn::Command::Edit;
 use strict;
 use warnings;
 use autodie;

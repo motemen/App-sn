@@ -1,4 +1,4 @@
-package App::sn::List;
+package App::sn::Command::List;
 use strict;
 use warnings;
 use parent 'App::CLI::Command';

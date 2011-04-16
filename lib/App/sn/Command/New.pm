@@ -1,7 +1,7 @@
-package App::sn::New;
+package App::sn::Command::New;
 use strict;
 use warnings;
-use parent 'App::sn::Edit';
+use parent 'App::sn::Command::Edit';
 
 sub run {
     my ($self) = @_;
