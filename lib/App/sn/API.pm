@@ -15,7 +15,6 @@ sub new {
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
     my $ua = AnyEvent::HTTP::LWP::UserAgent->new;
-    $ua->show_progress(1) if $ENV{DEBUG_APP_SN};
 
     my $growl = Growl::Any->new(appname => 'sn.pl', events => [ 'Note created', 'Note updated' ]);
 
@@ -53,6 +52,7 @@ sub get {
         auth  => $self->token,
         %$params
     );
+    warn "GET $url\n" if $ENV{DEBUG_SN_PL};
     my $res = $self->{ua}->get($url);
     return decode_json $res->content;
 }
