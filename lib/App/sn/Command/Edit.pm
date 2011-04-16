@@ -143,6 +143,6 @@ App::sn::Command::Edit - edit note
 
 =head1 USAGE
 
-sn.pl edit {note_key}
+sn.pl edit {note-key}
 
 =cut
