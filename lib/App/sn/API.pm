@@ -6,7 +6,6 @@ use URI;
 use URI::Escape qw(uri_escape);
 use JSON::XS;
 use MIME::Base64 qw(encode_base64);
-use LWP::UserAgent;
 use AnyEvent::HTTP::LWP::UserAgent;
 use Growl::Any;
 
@@ -15,13 +14,13 @@ sub new {
 
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
-    my $ua = LWP::UserAgent->new;
+    my $ua = AnyEvent::HTTP::LWP::UserAgent->new;
     $ua->show_progress(1) if $ENV{DEBUG_APP_SN};
 
     my $growl = Growl::Any->new(appname => 'sn.pl', events => [ 'Note created', 'Note updated' ]);
 
     return bless {
-        authority => 'https://simple-note.appspot.com',
+        api_root  => 'https://simple-note.appspot.com',
         config    => $config,
         ua        => $ua,
         growl     => $growl,
@@ -37,7 +36,7 @@ sub _build_token {
     my $self = shift;
 
     my $res = $self->{ua}->post(
-        "$self->{authority}/api/login",
+        "$self->{api_root}/api/login",
         Content => encode_base64(
             sprintf 'email=%s&password=%s', uri_escape($self->{config}->{email}), uri_escape($self->{config}->{password})
         )
@@ -48,7 +47,7 @@ sub _build_token {
 
 sub get {
     my ($self, $path, $params) = @_;
-    my $url = URI->new("$self->{authority}/api2/$path");
+    my $url = URI->new("$self->{api_root}/api2/$path");
     $url->query_form(
         email => $self->{config}->{email},
         auth  => $self->token,
@@ -58,19 +57,10 @@ sub get {
     return decode_json $res->content;
 }
 
-sub get_async {
-    my $self = shift;
-    my $ua = $self->{ua};
-    $self->{ua} = AnyEvent::HTTP::LWP::UserAgent->new;
-    my $res = $self->get(@_);
-    $self->{ua} = $ua;
-    return $res;
-}
-
 sub post {
     my ($self, $path, $data) = @_;
     my $res = $self->{ua}->post(
-        sprintf("$self->{authority}/api2/$path?auth=%s&email=%s", uri_escape($self->token), uri_escape($self->{config}->{email})),
+        sprintf("$self->{api_root}/api2/$path?auth=%s&email=%s", uri_escape($self->token), uri_escape($self->{config}->{email})),
         Content => encode_json($data),
     );
     return decode_json $res->content;

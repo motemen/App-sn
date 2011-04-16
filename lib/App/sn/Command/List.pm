@@ -20,7 +20,7 @@ sub run {
             $App::sn::state->{lastmodified} = $note->{modifydate}
                 if $note->{modifydate} > ( $App::sn::state->{lastmodified} || 0);
             push @jobs, async {
-                my $note = $api->get_async("data/$note->{key}");
+                my $note = $api->get("data/$note->{key}");
                 $App::sn::state->{notes}->{ $note->{key} } = $note;
             };
         }

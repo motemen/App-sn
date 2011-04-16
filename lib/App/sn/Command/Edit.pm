@@ -39,11 +39,17 @@ sub edit {
     my $self = shift;
 
     if (my $pid = fork()) {
-        local $SIG{CHLD} = sub {
+        # local $SIG{CHLD} = sub {
+        #     wait;
+        #     exit 0;
+        # };
+        local $SIG{HUP} = sub {
+            wait;
             exit 0;
         };
         local $SIG{__DIE__} = sub {
-            kill 9, $pid;
+            warn 'SIGDIE';
+            kill KILL => $pid;
             die @_;
         };
         my $watcher = Filesys::Notify::Simple->new([ dirname($self->{filename}) ]);
@@ -59,6 +65,7 @@ sub edit {
         }) while 1;
     } else {
         system $ENV{EDITOR}, $self->{filename};
+        kill HUP => getppid();
     }
 }
 
