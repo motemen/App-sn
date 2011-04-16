@@ -11,3 +11,15 @@ sub run {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+App::sn::Command::New - edit new note
+
+=head1 USAGE
+
+sn.pl new
+
+=cut

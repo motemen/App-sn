@@ -54,3 +54,19 @@ sub run {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+App::sn::Command::List - list notes
+
+=head1 USAGE
+
+sn.pl list
+
+=head1 OPTIONS
+
+    --no-data
+
+=cut

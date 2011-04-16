@@ -9,6 +9,10 @@ use Filesys::Notify::Simple;
 use File::Basename qw(basename dirname);
 use Encode;
 
+use constant options => (
+    'help' => 'help',
+);
+
 sub run {
     my ($self, $key) = @_;
 
@@ -43,22 +47,19 @@ sub edit {
         # };
         local $SIG{HUP} = sub {
             wait;
+            $self->update_if_changed;
             exit 0;
         };
         local $SIG{__DIE__} = sub {
-            warn 'SIGDIE';
             kill KILL => $pid;
+            $self->update_if_changed;
             die @_;
         };
         my $watcher = Filesys::Notify::Simple->new([ dirname($self->{filename}) ]);
         $watcher->wait(sub {
             foreach (@_) {
                 next unless basename($_->{path}) eq basename($self->{filename});
-                open my $in, '<', $self->{filename};
-                my $content = decode_utf8 do { local $/; <$in> };
-                if ($content ne $self->{content}) {
-                    $self->update($content);
-                }
+                $self->update_if_changed;
             }
         }) while 1;
     } else {
@@ -101,6 +102,14 @@ sub update {
 
 }
 
+sub update_if_changed {
+    my $self = shift;
+    my $content = $self->file_content;
+    if ($content ne $self->{content}) {
+        $self->update($content);
+    }
+}
+
 sub download {
     my $self = shift;
     my $note = $self->app->api->get("data/$self->{key}");
@@ -112,6 +121,12 @@ sub download {
     $self->app->local_data->{notes}->{ $note->{key} } = $note;
 }
 
+sub file_content {
+    my $self = shift;
+    open my $in, '<', $self->{filename};
+    return decode_utf8 do { local $/; <$in> };
+}
+
 sub _note_head {
     my ($self, $content) = @_;
     my ($head) = $content =~ /^\s*(.+)$/m;
@@ -119,3 +134,15 @@ sub _note_head {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+App::sn::Command::Edit - edit note
+
+=head1 USAGE
+
+sn.pl edit {note_key}
+
+=cut

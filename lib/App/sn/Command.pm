@@ -20,5 +20,8 @@ sub local_data {
     return $class->storage->{data};
 }
 
-1;
+sub error_cmd {
+    "Command not recognized, try $0 help.\n";
+}
 
+1;
