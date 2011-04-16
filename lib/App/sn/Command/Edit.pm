@@ -5,7 +5,6 @@ use autodie;
 use parent 'App::CLI::Command';
 use autodie;
 use File::Temp qw(tempdir tempfile);
-use App::sn::API;
 use Filesys::Notify::Simple;
 use File::Basename qw(basename dirname);
 use Encode;
@@ -20,7 +19,6 @@ sub run {
 sub init {
     my ($self, $key) = @_;
 
-    $self->{api} = App::sn::API->new;
     $self->{key} = $key;
     $self->{content} = '';
     $self->{modifydate} = undef;
@@ -64,6 +62,7 @@ sub edit {
             }
         }) while 1;
     } else {
+        $self->app->storage->no_auto_save;
         system $ENV{EDITOR}, $self->{filename};
         kill HUP => getppid();
     }
@@ -75,19 +74,19 @@ sub update {
     my $res;
     if (defined $self->{key}) {
         # update
-        $res = $self->{api}->post("data/$self->{key}", { content => $content, version => ++$self->{version}, syncnum => ++$self->{syncnum} });
-        $self->{api}->notify(
+        $res = $self->app->api->post("data/$self->{key}", { content => $content, version => ++$self->{version}, syncnum => ++$self->{syncnum} });
+        $self->app->api->notify(
             'Note updated', 'Note updated',
             $self->_note_head($content),
             'http://simple-note.appspot.com/img/logo.png'
         );
     } else {
         # create new
-        $res = $self->{api}->post('data', { content => $content });
+        $res = $self->app->api->post('data', { content => $content });
         $self->{version} = $res->{version};
         $self->{syncnum} = $res->{syncnum};
         $self->{key}     = $res->{key};
-        $self->{api}->notify(
+        $self->app->api->notify(
             'Note created', 'Note created',
             $self->_note_head($content),
             'http://simple-note.appspot.com/img/logo.png'
@@ -104,12 +103,13 @@ sub update {
 
 sub download {
     my $self = shift;
-    my $res = $self->{api}->get("data/$self->{key}");
-    $self->{version} = $res->{version};
-    $self->{syncnum} = $res->{syncnum};
-    $self->{content} = $res->{content};
+    my $note = $self->app->api->get("data/$self->{key}");
+    $self->{version} = $note->{version};
+    $self->{syncnum} = $note->{syncnum};
+    $self->{content} = $note->{content};
     open my $out, '>', $self->{filename};
     print $out $self->{content};
+    $self->app->local_data->{notes}->{ $note->{key} } = $note;
 }
 
 sub _note_head {
