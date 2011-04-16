@@ -69,12 +69,22 @@ sub update {
     if (defined $self->{key}) {
         # update
         $res = $self->{api}->post("data/$self->{key}", { content => $content, version => ++$self->{version}, syncnum => ++$self->{syncnum} });
+        $self->{api}->notify(
+            'Note updated', 'Note updated',
+            $self->_note_head($content),
+            'http://simple-note.appspot.com/img/logo.png'
+        );
     } else {
         # create new
         $res = $self->{api}->post('data', { content => $content });
         $self->{version} = $res->{version};
         $self->{syncnum} = $res->{syncnum};
         $self->{key}     = $res->{key};
+        $self->{api}->notify(
+            'Note created', 'Note created',
+            $self->_note_head($content),
+            'http://simple-note.appspot.com/img/logo.png'
+        );
     }
 
     $self->{modifydate} = $res->{modifydate};
@@ -93,6 +103,12 @@ sub download {
     $self->{content} = $res->{content};
     open my $out, '>', $self->{filename};
     print $out $self->{content};
+}
+
+sub _note_head {
+    my ($self, $content) = @_;
+    my ($head) = $content =~ /^\s*(.+)$/m;
+    return $head;
 }
 
 1;

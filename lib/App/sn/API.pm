@@ -8,6 +8,7 @@ use JSON::XS;
 use MIME::Base64 qw(encode_base64);
 use LWP::UserAgent;
 use AnyEvent::HTTP::LWP::UserAgent;
+use Growl::Any;
 
 sub new {
     my $class = shift;
@@ -15,8 +16,16 @@ sub new {
     my $config = pit_get('simple-note.appspot.com', require => { email => 'email', password => 'password' });
 
     my $ua = LWP::UserAgent->new;
+    $ua->show_progress(1) if $ENV{DEBUG_APP_SN};
 
-    return bless { authority => 'https://simple-note.appspot.com', config => $config, ua => $ua }, $class;
+    my $growl = Growl::Any->new(appname => 'sn.pl', events => [ 'Note created', 'Note updated' ]);
+
+    return bless {
+        authority => 'https://simple-note.appspot.com',
+        config    => $config,
+        ua        => $ua,
+        growl     => $growl,
+    }, $class;
 }
 
 sub token {
@@ -65,6 +74,11 @@ sub post {
         Content => encode_json($data),
     );
     return decode_json $res->content;
+}
+
+sub notify {
+    my ($self, $event, $title, $message, $icon) = @_;
+    $self->{growl}->notify($event, $title, $message, $icon);
 }
 
 1;
