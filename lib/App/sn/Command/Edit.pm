@@ -23,6 +23,16 @@ sub run {
 sub init {
     my ($self, $key) = @_;
 
+    if (defined $key) {
+        if (my @possible_keys = grep /\Q$key\E/, keys %{$self->app->local_data->{notes}}) {
+            if (@possible_keys == 1) {
+                $key = $possible_keys[0];
+            } elsif (@possible_keys > 1) {
+                die join("\n", qq(Note key '$key' specifies multiple keys:), map " * $_", @possible_keys) . "\n";
+            }
+        }
+    }
+
     $self->{key} = $key;
     $self->{content} = '';
     $self->{modifydate} = undef;
@@ -78,7 +88,7 @@ sub update {
         $res = $self->app->api->post("data/$self->{key}", { content => $content, version => ++$self->{version}, syncnum => ++$self->{syncnum} });
         $self->app->api->notify(
             'Note updated', 'Note updated',
-            $self->_note_head($content),
+            "v$self->{version}: " . $self->_note_head($content),
             'http://simple-note.appspot.com/img/logo.png'
         );
     } else {
@@ -89,7 +99,7 @@ sub update {
         $self->{key}     = $res->{key};
         $self->app->api->notify(
             'Note created', 'Note created',
-            $self->_note_head($content),
+            "v$self->{version}: " . $self->_note_head($content),
             'http://simple-note.appspot.com/img/logo.png'
         );
     }

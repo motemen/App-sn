@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use parent 'App::CLI::Command';
 use Coro;
+use List::Util qw(max);
+use List::MoreUtils qw(first_value);
 
 use constant options => (
     'no-data' => 'no_data',
@@ -46,10 +48,21 @@ sub run {
         [ $_, $_->{modifydate} ]
     } values %{ $app->local_data->{notes} };
 
+    my %key = map { ( $_->{key} => $_->{key} ) } @notes;
+    if (eval { require Algorithm::UniqueSubstring; 1 }) {
+        my $subkeys = Algorithm::UniqueSubstring::unique_substrings(map { $_->{key} } @notes);
+        foreach (keys %$subkeys) {
+            if (my $subkey = first_value { /^\w/ } @{ $subkeys->{$_} }) {
+                $key{$_} = $subkey;
+            }
+        }
+    }
+
+    my $n = max map { length $_ } values %key;
     foreach (@notes) {
         next if $_->{deleted};
         my $head = ($_->{content} || '') =~ /^\s*(.{1,30})/m ? $1 : '';
-        print "$_->{key} $head\n";
+        printf "%-${n}s: %s\n", $key{ $_->{key} }, $head;
     }
 }
 

@@ -54,6 +54,7 @@ sub get {
     );
     warn "GET $url\n" if $ENV{DEBUG_SN_PL};
     my $res = $self->{ua}->get($url);
+    die $res->status_line if $res->is_error;
     return decode_json $res->content;
 }
 
@@ -63,6 +64,8 @@ sub post {
         sprintf("$self->{api_root}/api2/$path?auth=%s&email=%s", uri_escape($self->token), uri_escape($self->{config}->{email})),
         Content => encode_json($data),
     );
+    warn "POST $self->{api_root}/api2/$path\n" if $ENV{DEBUG_SN_PL};
+    die $res->status_line if $res->is_error;
     return decode_json $res->content;
 }
 

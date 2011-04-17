@@ -20,6 +20,8 @@ requires 'MIME::Base64';
 requires 'LWP::UserAgent';
 requires 'AnyEvent::HTTP::LWP::UserAgent';
 requires 'Coro';
+requires 'List::Util';
+requires 'List::MoreUtils';
 
 auto_set_repository;
 auto_include;
