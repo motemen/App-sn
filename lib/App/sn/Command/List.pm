@@ -4,10 +4,13 @@ use warnings;
 use parent 'App::CLI::Command';
 use Coro;
 use List::Util qw(max);
-use List::MoreUtils qw(first_value);
+use List::MoreUtils qw(any first_value);
+use Term::ANSIColor;
+use Encode;
 
 use constant options => (
-    'no-data' => 'no_data',
+    'no-data'  => 'no_data',
+    'tag|t=s@' => 'tags',
 );
 
 sub run {
@@ -15,14 +18,14 @@ sub run {
 
     my $app = $self->app;
     my $mark; {
-        my $res = $app->api->get(
+        my $index = $app->api->get(
             'index',
             $mark ? { mark => $mark } :
             $app->local_data->{last_modified} ? { since => $app->local_data->{last_modified} } : {}
         );
 
         my @jobs;
-        foreach my $note (@{$res->{data}}) {
+        foreach my $note (@{ $index->{data} }) {
             $app->local_data->{last_modified} = $note->{modifydate}
                 if $note->{modifydate} > ( $app->local_data->{last_modified} || 0);
             
@@ -30,6 +33,7 @@ sub run {
                 $app->local_data->{notes}->{ $note->{key} }->{$_} = $note->{$_} for keys %$note;
             } else {
                 push @jobs, async {
+                    print STDERR "Fetching note $note->{key}\n";
                     my $note = $app->api->get("data/$note->{key}");
                     $app->local_data->{notes}->{ $note->{key} } = $note;
                 };
@@ -37,7 +41,7 @@ sub run {
         }
         $_->join for @jobs;
 
-        redo if $mark = $res->{mark};
+        redo if $mark = $index->{mark};
     }
 
     my @notes = map {
@@ -58,11 +62,24 @@ sub run {
         }
     }
 
-    my $n = max map { length $_ } values %key;
-    foreach (@notes) {
-        next if $_->{deleted};
-        my $head = ($_->{content} || '') =~ /^\s*(.{1,30})/m ? $1 : '';
-        printf "%-${n}s: %s\n", $key{ $_->{key} }, $head;
+    my %filter_tags = map { decode_utf8($_) => 1 } @{ $self->{tags} || [] };
+
+    my $w = max map { length $_ } values %key;
+    foreach my $note (@notes) {
+        my @tags = @{ $note->{tags} || [] };
+        next if $note->{deleted};
+        if (%filter_tags) {
+            next unless any { $filter_tags{$_} } @tags;
+        }
+        my $head = ($note->{content} || '') =~ /^\s*(.{1,30})/m ? $1 : '';
+        print colored [ 'yellow' ], sprintf "%${w}s", $key{ $note->{key} };
+        print ' ';
+        print $head;
+        if (@tags) {
+            print '  ';
+            print join ' ', map { colored [ 'blue' ], $_ } @tags;
+        }
+        print "\n";
     }
 }
 
@@ -80,6 +97,7 @@ sn.pl list
 
 =head1 OPTIONS
 
-    --no-data
+  --no-data	Do not fetch note content.
+  -t, --tag {tag}	Filter notes by tag.
 
 =cut
