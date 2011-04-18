@@ -12,20 +12,14 @@ sub file {
 
 sub load {
     my $class = shift;
-    my $data = eval {
-        open my $fh, '<', $class->file;
-        local $/;
-        YAML::XS::Load <$fh>;
-    } || {};
+    my $data = eval { YAML::XS::LoadFile $class->file } || {};
     return bless { data => $data }, $class;
 }
 
 sub save {
     my $self = shift;
     warn 'Storing to ' . $self->file . "\n" if $ENV{DEBUG_SN_PL};
-    my $yaml = YAML::XS::Dump $self->{data};
-    open my $fh, '>', $self->file;
-    print $fh $yaml;
+    YAML::XS::DumpFile $self->file, $self->{data};
 }
 
 sub no_auto_save {
