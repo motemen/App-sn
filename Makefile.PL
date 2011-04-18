@@ -23,7 +23,8 @@ requires 'Coro';
 requires 'List::Util';
 requires 'List::MoreUtils';
 
-auto_set_repository;
+install_script 'sn.pl';
+
 auto_include;
 
 WriteAll;
