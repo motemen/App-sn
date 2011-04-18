@@ -9,10 +9,6 @@ use Filesys::Notify::Simple;
 use File::Basename qw(basename dirname);
 use Encode;
 
-use constant options => (
-    'help' => 'help',
-);
-
 sub run {
     my ($self, $key) = @_;
 
@@ -127,6 +123,7 @@ sub download {
     $self->{syncnum} = $note->{syncnum};
     $self->{content} = $note->{content};
     open my $out, '>', $self->{filename};
+    binmode $out, ':utf8';
     print $out $self->{content};
     $self->app->local_data->{notes}->{ $note->{key} } = $note;
 }
