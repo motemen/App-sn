@@ -17,29 +17,36 @@ sub run {
     my ($self, $arg) = @_;
 
     my $app = $self->app;
+    my $notes_count = 0;
     my $mark; {
         my $index = $app->api->get(
-            'index',
-            $mark ? { mark => $mark } :
-            $app->local_data->{last_modified} ? { since => $app->local_data->{last_modified} } : {}
+            'index', {
+                length => 100,
+                $mark ? ( mark => $mark ) :
+                $app->local_data->{last_modified} ? ( since => $app->local_data->{last_modified} ) : ()
+            }
         );
 
         my @jobs;
         foreach my $note (@{ $index->{data} }) {
             $app->local_data->{last_modified} = $note->{modifydate}
                 if $note->{modifydate} > ( $app->local_data->{last_modified} || 0);
-            
+
             if ($self->{no_data}) {
                 $app->local_data->{notes}->{ $note->{key} }->{$_} = $note->{$_} for keys %$note;
             } else {
                 push @jobs, async {
-                    print STDERR "Fetching note $note->{key}\n";
                     my $note = $app->api->get("data/$note->{key}");
                     $app->local_data->{notes}->{ $note->{key} } = $note;
                 };
             }
         }
-        $_->join for @jobs;
+        for (0 .. $#jobs) {
+            $jobs[$_]->join;
+            printf STDERR "\rFetching note %d/%d", $notes_count + $_ + 1, $notes_count + @jobs;
+        }
+        $notes_count += @jobs;
+        print "\n" if @jobs;
 
         redo if $mark = $index->{mark};
     }
