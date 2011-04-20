@@ -3,9 +3,10 @@ use strict;
 use warnings;
 use lib 'lib';
 use App::sn::Command;
+use Encode::Locale;
 
 $|++;
-binmode STDOUT, ':utf8';
+binmode STDOUT, ':encoding(console_out)';
 
 @ARGV = ('help') unless @ARGV;
 

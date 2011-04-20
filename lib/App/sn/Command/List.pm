@@ -6,15 +6,12 @@ use Coro;
 use List::Util qw(max);
 use List::MoreUtils qw(any first_value);
 use Term::ANSIColor;
-use Encode::Locale;
 use Encode;
 
 use constant options => (
     'no-data'  => 'no_data',
     'tag|t=s@' => 'tags',
 );
-
-binmode(STDOUT, ":encoding(console_out)");
 
 sub run {
     my ($self, $arg) = @_;
