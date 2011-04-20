@@ -77,8 +77,9 @@ sub get {
         auth  => $self->token,
         %$params
     );
-    my $res = $self->{ua}->get($url);
     warn "GET $url\n" if $ENV{DEBUG_SN_PL};
+    my $res = $self->{ua}->get($url);
+    warn "GET $url => " . $res->code . "\n" if $ENV{DEBUG_SN_PL};
     if ($res->code eq '401' && !$self->{auth_retry}) {
         $self->{auth_retry}++;
         $self->expire_local_auth_token;
@@ -90,11 +91,12 @@ sub get {
 
 sub post {
     my ($self, $path, $data) = @_;
+    warn "POST $self->{api_root}/api2/$path\n" if $ENV{DEBUG_SN_PL};
     my $res = $self->{ua}->post(
         sprintf("$self->{api_root}/api2/$path?auth=%s&email=%s", uri_escape($self->token), uri_escape($self->{config}->{email})),
         Content => encode_json($data),
     );
-    warn "POST $self->{api_root}/api2/$path\n" if $ENV{DEBUG_SN_PL};
+    warn "POST $self->{api_root}/api2/$path => " . $res->code . "\n" if $ENV{DEBUG_SN_PL};
     if ($res->code eq '401' && $self->{auth_retry}) {
         $self->{auth_retry}++;
         $self->expire_local_auth_token;
