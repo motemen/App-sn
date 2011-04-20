@@ -11,6 +11,7 @@ requires 'File::HomeDir';
 requires 'File::Spec';
 requires 'Filesys::Notify::Simple';
 requires 'Encode';
+requires 'Encode::Locale';
 requires 'Config::Pit';
 requires 'URI';
 requires 'URI::Escape';
