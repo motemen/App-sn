@@ -45,6 +45,12 @@ Print note content to stdout.
 
  * `--local` Show local cached note content.
 
+### grep
+
+Grep note contents. Currently does on local data.
+
+	sn.pl grep {pattern}
+
 ### help
 
 Show help.
