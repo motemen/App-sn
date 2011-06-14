@@ -101,6 +101,7 @@ sub update {
     }
 
     $self->{modifydate} = $res->{modifydate};
+    $self->{content} = $content;
 
     if ($self->{version} != $res->{version} || $res->{syncnum} != $self->{syncnum}) {
         $self->download;
